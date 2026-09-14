@@ -1,0 +1,1929 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Neon Arcade</title>
+
+<style>
+*{box-sizing:border-box}
+
+body{
+    margin:0;
+    min-height:100vh;
+    font-family:Arial,sans-serif;
+    color:#fff;
+    background:
+        radial-gradient(circle at 50% -10%,#36366b,#111124 40%,#06060c 80%);
+}
+
+header{
+    position:sticky;
+    top:0;
+    z-index:10;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:15px 22px;
+    background:rgba(5,5,14,.85);
+    backdrop-filter:blur(15px);
+    border-bottom:1px solid #353550;
+}
+
+.logo{
+    color:#ffd75a;
+    font-weight:900;
+    letter-spacing:3px;
+    text-shadow:0 0 20px #ffd75a99;
+}
+
+.points{
+    padding:9px 16px;
+    border:1px solid #454565;
+    border-radius:30px;
+    background:#10101d;
+}
+
+.points span{
+    color:#59ff9c;
+    font-weight:bold;
+}
+
+main{
+    max-width:1100px;
+    margin:auto;
+    padding:25px 18px 60px;
+}
+
+.screen{display:none}
+
+.screen.active{
+    display:block;
+    animation:fadeIn .35s ease;
+}
+
+@keyframes fadeIn{
+    from{
+        opacity:0;
+        transform:translateY(15px)
+    }
+    to{
+        opacity:1;
+        transform:none
+    }
+}
+
+.hero{
+    text-align:center;
+    padding:20px;
+}
+
+.hero h1{
+    font-size:clamp(42px,8vw,78px);
+    margin:15px 0 5px;
+    background:linear-gradient(90deg,#4deaff,#fff,#ff4bd8);
+    -webkit-background-clip:text;
+    color:transparent;
+    animation:titleFloat 3s ease-in-out infinite;
+}
+
+@keyframes titleFloat{
+    50%{transform:translateY(-6px)}
+}
+
+.hero p{
+    color:#9d9db8;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:
+        repeat(auto-fit,minmax(210px,1fr));
+    gap:16px;
+    margin-top:25px;
+}
+
+.tile{
+    min-height:185px;
+    padding:22px;
+    border-radius:22px;
+    border:1px solid #393956;
+    background:linear-gradient(145deg,#1b1b35,#10101d);
+    cursor:pointer;
+    transition:.25s;
+}
+
+.tile:hover{
+    transform:translateY(-7px);
+    border-color:#77779c;
+    box-shadow:0 20px 50px #0008;
+}
+
+.tile .emoji{
+    font-size:52px;
+}
+
+.tile h3{
+    margin:10px 0 5px;
+}
+
+.muted{
+    color:#9c9cb5;
+}
+
+.top{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin-bottom:15px;
+}
+
+.panel{
+    background:rgba(17,17,31,.92);
+    border:1px solid #393956;
+    border-radius:24px;
+    padding:25px;
+    box-shadow:0 20px 60px #0007;
+}
+
+button{
+    border:1px solid #464665;
+    background:#19192d;
+    color:white;
+    padding:11px 17px;
+    border-radius:11px;
+    font-weight:bold;
+    cursor:pointer;
+    transition:.18s;
+}
+
+button:hover{
+    transform:translateY(-2px);
+    border-color:#77779d;
+}
+
+.primary{
+    border:0;
+    background:linear-gradient(135deg,#14adff,#855cff);
+}
+
+.danger{
+    background:#351624;
+}
+
+.controls{
+    display:flex;
+    justify-content:center;
+    flex-wrap:wrap;
+    gap:10px;
+    margin:18px 0;
+}
+
+.result{
+    text-align:center;
+    min-height:28px;
+    color:#59ff9c;
+    font-weight:bold;
+}
+
+/* SLOTS */
+
+.slots{
+    display:flex;
+    justify-content:center;
+    gap:8px;
+    margin:25px 0;
+}
+
+.reel{
+    width:min(18vw,105px);
+    height:min(18vw,105px);
+    display:grid;
+    place-items:center;
+    font-size:clamp(38px,7vw,60px);
+    background:#06060c;
+    border:2px solid #555573;
+    border-radius:17px;
+    box-shadow:inset 0 0 25px #000;
+}
+
+.reel.spin{
+    animation:reelSpin .6s ease;
+}
+
+@keyframes reelSpin{
+    0%{
+        transform:translateY(-35px) rotateX(0);
+        filter:blur(5px);
+    }
+
+    50%{
+        transform:translateY(25px) rotateX(180deg);
+        filter:blur(7px);
+    }
+
+    100%{
+        transform:none;
+        filter:none;
+    }
+}
+
+.jackpot{
+    animation:jackpot .65s ease 3;
+}
+
+@keyframes jackpot{
+    50%{
+        transform:scale(1.12);
+        box-shadow:0 0 45px #ffd75acc;
+    }
+}
+
+/* ROULETTE */
+
+.wheel{
+    width:255px;
+    height:255px;
+    margin:20px auto;
+    border-radius:50%;
+    border:9px solid #e7c65b;
+
+    background:
+    conic-gradient(
+        #c83248 0 30deg,
+        #15151e 30deg 60deg,
+        #c83248 60deg 90deg,
+        #15151e 90deg 120deg,
+        #c83248 120deg 150deg,
+        #15151e 150deg 180deg,
+        #c83248 180deg 210deg,
+        #15151e 210deg 240deg,
+        #c83248 240deg 270deg,
+        #15151e 270deg 300deg,
+        #c83248 300deg 330deg,
+        #15151e 330deg
+    );
+
+    display:grid;
+    place-items:center;
+    font-size:42px;
+    box-shadow:0 0 40px #000;
+}
+
+.wheel.spin{
+    animation:wheelSpin 2.2s cubic-bezier(.12,.75,.08,1);
+}
+
+@keyframes wheelSpin{
+    to{
+        transform:rotate(1260deg)
+    }
+}
+
+/* BLACKJACK */
+
+.table{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:15px;
+}
+
+.hand{
+    background:#08080f;
+    border:1px solid #32324b;
+    border-radius:18px;
+    padding:18px;
+    min-height:150px;
+}
+
+.cards{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+}
+
+.playing-card{
+    width:48px;
+    height:65px;
+    display:grid;
+    place-items:center;
+    background:#f5f5f7;
+    color:#111;
+    border-radius:7px;
+    font-weight:900;
+    box-shadow:0 5px 15px #0008;
+    animation:cardIn .25s ease;
+}
+
+.red-card{
+    color:#d52d4c;
+}
+
+@keyframes cardIn{
+    from{
+        opacity:0;
+        transform:translateY(-20px) rotateY(90deg);
+    }
+
+    to{
+        opacity:1;
+        transform:none;
+    }
+}
+
+/* NUMBERS */
+
+.number-grid{
+    display:grid;
+    grid-template-columns:
+        repeat(10,1fr);
+    gap:7px;
+    max-width:650px;
+    margin:20px auto;
+}
+
+.number-grid button{
+    padding:11px 4px;
+}
+
+.number-grid .selected{
+    background:#7254ff;
+    border-color:#aa9aff;
+    box-shadow:0 0 18px #7254ff88;
+}
+
+/* STATS */
+
+.stats{
+    display:grid;
+    grid-template-columns:
+        repeat(auto-fit,minmax(150px,1fr));
+    gap:12px;
+}
+
+.stat{
+    padding:20px;
+    text-align:center;
+    border-radius:15px;
+    background:#09090f;
+    border:1px solid #32324b;
+}
+
+.stat strong{
+    display:block;
+    color:#ffd75a;
+    font-size:30px;
+    margin-top:5px;
+}
+
+.toast{
+    position:fixed;
+    right:18px;
+    bottom:18px;
+    z-index:30;
+    padding:13px 17px;
+    border-radius:13px;
+    background:#19192d;
+    border:1px solid #565678;
+    transform:translateY(130px);
+    transition:.3s;
+}
+
+.toast.show{
+    transform:none;
+}
+
+footer{
+    text-align:center;
+    color:#66667e;
+    margin-top:30px;
+}
+
+@media(max-width:650px){
+
+    .table{
+        grid-template-columns:1fr;
+    }
+
+    .number-grid{
+        grid-template-columns:
+            repeat(5,1fr);
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+
+<div class="logo">
+✦ NEON ARCADE
+</div>
+
+<div class="points">
+⭐ Punkte:
+<span id="points">1000</span>
+</div>
+
+</header>
+
+<main>
+
+<!-- LOBBY -->
+
+<section id="home" class="screen active">
+
+<div class="hero">
+
+<h1>
+NEON ARCADE
+</h1>
+
+<p>
+Casino-inspirierte Arcade-Minispiele
+mit Animationen, Sounds und virtuellen Punkten.
+</p>
+
+</div>
+
+<div class="grid">
+
+<div class="tile" onclick="openScreen('slots')">
+<div class="emoji">🎰</div>
+<h3>Neon Slots</h3>
+<p class="muted">
+5 Walzen und Jackpot-Effekte.
+</p>
+</div>
+
+<div class="tile" onclick="openScreen('roulette')">
+<div class="emoji">🎡</div>
+<h3>Roulette</h3>
+<p class="muted">
+Drehendes Rad mit Sound.
+</p>
+</div>
+
+<div class="tile" onclick="openScreen('blackjack')">
+<div class="emoji">🃏</div>
+<h3>Blackjack</h3>
+<p class="muted">
+Karten ziehen und gegen den Dealer spielen.
+</p>
+</div>
+
+<div class="tile" onclick="openScreen('numbers')">
+<div class="emoji">🔢</div>
+<h3>Number Rush</h3>
+<p class="muted">
+Zahlen auswählen und Treffer sammeln.
+</p>
+</div>
+
+<div class="tile" onclick="openScreen('dice')">
+<div class="emoji">🎲</div>
+<h3>Dice Duel</h3>
+<p class="muted">
+Würfelduell gegen die Maschine.
+</p>
+</div>
+
+<div class="tile" onclick="openScreen('stats')">
+<div class="emoji">🏆</div>
+<h3>Statistik</h3>
+<p class="muted">
+Punkte, Siege und Highscore.
+</p>
+</div>
+
+</div>
+
+<footer>
+Arcade-Demo · Nur virtuelle Punkte
+</footer>
+
+</section>
+
+
+<!-- SLOTS -->
+
+<section id="slots" class="screen">
+
+<div class="top">
+
+<button onclick="home()">
+← Lobby
+</button>
+
+<h2>
+🎰 Neon Slots
+</h2>
+
+</div>
+
+<div class="panel">
+
+<div class="slots">
+
+<div class="reel" id="reel0">🍒</div>
+<div class="reel" id="reel1">⭐</div>
+<div class="reel" id="reel2">💎</div>
+<div class="reel" id="reel3">🔔</div>
+<div class="reel" id="reel4">7️⃣</div>
+
+</div>
+
+<div class="controls">
+
+<button
+class="primary"
+onclick="spinSlots()">
+
+SPIN ✨
+
+</button>
+
+</div>
+
+<div
+class="result"
+id="slotResult">
+
+Bereit?
+
+</div>
+
+</div>
+
+</section>
+
+
+<!-- ROULETTE -->
+
+<section id="roulette" class="screen">
+
+<div class="top">
+
+<button onclick="home()">
+← Lobby
+</button>
+
+<h2>
+🎡 Roulette
+</h2>
+
+</div>
+
+<div class="panel">
+
+<div
+class="wheel"
+id="wheel">
+
+?
+
+</div>
+
+<div class="controls">
+
+<button onclick="roulette('red')">
+🔴 Rot
+</button>
+
+<button onclick="roulette('black')">
+⚫ Schwarz
+</button>
+
+<button onclick="roulette('even')">
+Gerade
+</button>
+
+<button onclick="roulette('odd')">
+Ungerade
+</button>
+
+</div>
+
+<div
+class="result"
+id="rouletteResult">
+
+Wähle eine Kategorie.
+
+</div>
+
+</div>
+
+</section>
+
+
+<!-- BLACKJACK -->
+
+<section id="blackjack" class="screen">
+
+<div class="top">
+
+<button onclick="home()">
+← Lobby
+</button>
+
+<h2>
+🃏 Blackjack
+</h2>
+
+</div>
+
+<div class="panel">
+
+<div class="controls">
+
+<button
+class="primary"
+onclick="newBlackjack()">
+
+Neue Runde
+
+</button>
+
+<button onclick="hit()">
+Karte ziehen
+</button>
+
+<button onclick="stand()">
+Passen
+</button>
+
+</div>
+
+<div class="table">
+
+<div class="hand">
+
+<h3>
+Du:
+<span id="playerScore">0</span>
+</h3>
+
+<div
+class="cards"
+id="playerCards">
+</div>
+
+</div>
+
+<div class="hand">
+
+<h3>
+Dealer:
+<span id="dealerScore">?</span>
+</h3>
+
+<div
+class="cards"
+id="dealerCards">
+</div>
+
+</div>
+
+</div>
+
+<div
+class="result"
+id="blackjackResult">
+</div>
+
+</div>
+
+</section>
+
+
+<!-- NUMBER RUSH -->
+
+<section id="numbers" class="screen">
+
+<div class="top">
+
+<button onclick="home()">
+← Lobby
+</button>
+
+<h2>
+🔢 Number Rush
+</h2>
+
+</div>
+
+<div class="panel">
+
+<p
+class="muted"
+style="text-align:center">
+
+Wähle genau 5 Zahlen.
+
+</p>
+
+<div
+class="number-grid"
+id="numberGrid">
+</div>
+
+<div class="controls">
+
+<button
+class="primary"
+onclick="drawNumbers()">
+
+ZIEHEN ✨
+
+</button>
+
+</div>
+
+<div
+class="result"
+id="numberResult">
+</div>
+
+</div>
+
+</section>
+
+
+<!-- DICE -->
+
+<section id="dice" class="screen">
+
+<div class="top">
+
+<button onclick="home()">
+← Lobby
+</button>
+
+<h2>
+🎲 Dice Duel
+</h2>
+
+</div>
+
+<div
+class="panel"
+style="text-align:center">
+
+<div
+id="diceDisplay"
+style="font-size:85px">
+
+🎲 🎲
+
+</div>
+
+<div class="controls">
+
+<button
+class="primary"
+onclick="rollDice()">
+
+WÜRFELN
+
+</button>
+
+</div>
+
+<div
+class="result"
+id="diceResult">
+</div>
+
+</div>
+
+</section>
+
+
+<!-- STATS -->
+
+<section id="stats" class="screen">
+
+<div class="top">
+
+<button onclick="home()">
+← Lobby
+</button>
+
+<h2>
+🏆 Statistik
+</h2>
+
+</div>
+
+<div class="panel">
+
+<div class="stats">
+
+<div class="stat">
+
+Punkte
+
+<strong id="statPoints">
+1000
+</strong>
+
+</div>
+
+<div class="stat">
+
+Runden
+
+<strong id="statRounds">
+0
+</strong>
+
+</div>
+
+<div class="stat">
+
+Siege
+
+<strong id="statWins">
+0
+</strong>
+
+</div>
+
+<div class="stat">
+
+Highscore
+
+<strong id="statBest">
+1000
+</strong>
+
+</div>
+
+</div>
+
+<div class="controls">
+
+<button
+class="danger"
+onclick="resetGame()">
+
+Spielstand zurücksetzen
+
+</button>
+
+</div>
+
+</div>
+
+</section>
+
+</main>
+
+<div
+class="toast"
+id="toast">
+</div>
+
+
+<script>
+
+let points = 1000;
+let rounds = 0;
+let wins = 0;
+let highscore = 1000;
+
+let blackjackActive = false;
+
+let player = [];
+let dealer = [];
+
+let selectedNumbers = [];
+
+let audioContext = null;
+
+
+/* AUDIO */
+
+function initAudio(){
+
+if(!audioContext){
+
+audioContext =
+new (
+window.AudioContext ||
+window.webkitAudioContext
+)();
+
+}
+
+if(audioContext.state === "suspended"){
+audioContext.resume();
+}
+
+}
+
+
+function sound(
+frequency,
+duration=.08,
+type="sine",
+volume=.04,
+delay=0
+){
+
+initAudio();
+
+const oscillator =
+audioContext.createOscillator();
+
+const gain =
+audioContext.createGain();
+
+oscillator.type = type;
+
+oscillator.frequency.value =
+frequency;
+
+gain.gain.setValueAtTime(
+0,
+audioContext.currentTime + delay
+);
+
+gain.gain.linearRampToValueAtTime(
+volume,
+audioContext.currentTime +
+delay +
+.01
+);
+
+gain.gain.exponentialRampToValueAtTime(
+.0001,
+audioContext.currentTime +
+delay +
+duration
+);
+
+oscillator
+.connect(gain)
+.connect(audioContext.destination);
+
+oscillator.start(
+audioContext.currentTime +
+delay
+);
+
+oscillator.stop(
+audioContext.currentTime +
+delay +
+duration +
+.02
+);
+
+}
+
+
+function clickSound(){
+sound(850,.05,"square",.025);
+}
+
+
+function winSound(){
+
+[
+523,
+659,
+784,
+1047
+].forEach(
+(frequency,index)=>{
+
+sound(
+frequency,
+.16,
+"sine",
+.055,
+index*.08
+);
+
+});
+
+}
+
+
+function loseSound(){
+
+sound(
+180,
+.22,
+"sawtooth",
+.035
+);
+
+sound(
+130,
+.25,
+"sawtooth",
+.025,
+.12
+);
+
+}
+
+
+/* UI */
+
+function updateUI(){
+
+document.getElementById("points")
+.textContent = points;
+
+document.getElementById("statPoints")
+.textContent = points;
+
+document.getElementById("statRounds")
+.textContent = rounds;
+
+document.getElementById("statWins")
+.textContent = wins;
+
+document.getElementById("statBest")
+.textContent = highscore;
+
+}
+
+
+function addPoints(amount){
+
+points += amount;
+
+if(points > highscore){
+highscore = points;
+}
+
+updateUI();
+
+}
+
+
+function openScreen(id){
+
+clickSound();
+
+document
+.querySelectorAll(".screen")
+.forEach(
+screen =>
+screen.classList.remove("active")
+);
+
+document
+.getElementById(id)
+.classList.add("active");
+
+if(id === "numbers"){
+buildNumbers();
+}
+
+}
+
+
+function home(){
+openScreen("home");
+}
+
+
+function toast(message){
+
+const element =
+document.getElementById("toast");
+
+element.textContent = message;
+
+element.classList.add("show");
+
+setTimeout(
+()=>{
+element.classList.remove("show");
+},
+1800
+);
+
+}
+
+
+/* SLOTS */
+
+const slotSymbols = [
+"🍒",
+"🍋",
+"⭐",
+"💎",
+"🔔",
+"7️⃣"
+];
+
+
+function spinSlots(){
+
+initAudio();
+
+const reels = [];
+
+for(let i=0;i<5;i++){
+
+const reel =
+document.getElementById(
+"reel"+i
+);
+
+reel.classList.remove(
+"spin",
+"jackpot"
+);
+
+void reel.offsetWidth;
+
+reel.classList.add("spin");
+
+reels.push(reel);
+
+}
+
+sound(
+120,
+.5,
+"sawtooth",
+.025
+);
+
+setTimeout(()=>{
+
+const result = [];
+
+reels.forEach(reel=>{
+
+const symbol =
+slotSymbols[
+Math.floor(
+Math.random() *
+slotSymbols.length
+)
+];
+
+reel.textContent = symbol;
+
+result.push(symbol);
+
+});
+
+rounds++;
+
+const allSame =
+result.every(
+symbol =>
+symbol === result[0]
+);
+
+let reward = 0;
+
+if(allSame){
+
+if(result[0] === "💎")
+reward = 100;
+
+else if(result[0] === "7️⃣")
+reward = 80;
+
+else if(result[0] === "⭐")
+reward = 60;
+
+else
+reward = 35;
+
+}
+
+const resultText =
+document.getElementById(
+"slotResult"
+);
+
+if(reward > 0){
+
+addPoints(reward);
+
+wins++;
+
+reels.forEach(
+reel =>
+reel.classList.add("jackpot")
+);
+
+winSound();
+
+resultText.textContent =
+"✨ JACKPOT! +" +
+reward +
+" Punkte";
+
+toast("🎉 Treffer!");
+
+}
+else{
+
+loseSound();
+
+resultText.textContent =
+"Kein Treffer – nochmal!";
+
+}
+
+updateUI();
+
+},650);
+
+}
+
+
+/* ROULETTE */
+
+function roulette(choice){
+
+initAudio();
+
+const wheel =
+document.getElementById("wheel");
+
+wheel.classList.remove("spin");
+
+void wheel.offsetWidth;
+
+wheel.classList.add("spin");
+
+sound(250,.1,"square",.02);
+
+setTimeout(()=>{
+
+const number =
+Math.floor(Math.random()*37);
+
+let color;
+
+if(number === 0)
+color = "green";
+
+else if(number % 2 === 0)
+color = "black";
+
+else
+color = "red";
+
+const win =
+choice === color ||
+
+(
+choice === "even" &&
+number > 0 &&
+number % 2 === 0
+) ||
+
+(
+choice === "odd" &&
+number % 2 === 1
+);
+
+rounds++;
+
+wheel.textContent =
+number;
+
+const result =
+document.getElementById(
+"rouletteResult"
+);
+
+if(win){
+
+wins++;
+
+addPoints(45);
+
+winSound();
+
+result.textContent =
+"🎉 Treffer! " +
+number +
+" (" +
+color +
+") · +45 Punkte";
+
+}
+else{
+
+loseSound();
+
+result.textContent =
+"Ergebnis: " +
+number +
+" (" +
+color +
+")";
+
+}
+
+updateUI();
+
+},2200);
+
+}
+
+
+/* BLACKJACK */
+
+const ranks = [
+"A","2","3","4","5","6","7",
+"8","9","10","J","Q","K"
+];
+
+const suits = [
+"♠️","♥️","♦️","♣️"
+];
+
+
+function createCard(){
+
+return {
+
+rank:
+ranks[
+Math.floor(
+Math.random() *
+ranks.length
+)
+],
+
+suit:
+suits[
+Math.floor(
+Math.random() *
+suits.length
+)
+]
+
+};
+
+}
+
+
+function cardValue(card){
+
+if(
+card.rank === "J" ||
+card.rank === "Q" ||
+card.rank === "K"
+)
+return 10;
+
+if(card.rank === "A")
+return 11;
+
+return Number(card.rank);
+
+}
+
+
+function handScore(hand){
+
+let score =
+hand.reduce(
+(sum,card) =>
+sum + cardValue(card),
+0
+);
+
+let aces =
+hand.filter(
+card =>
+card.rank === "A"
+).length;
+
+while(
+score > 21 &&
+aces > 0
+){
+
+score -= 10;
+aces--;
+
+}
+
+return score;
+
+}
+
+
+function drawHand(
+element,
+hand,
+hideDealer=false
+){
+
+element.innerHTML = "";
+
+hand.forEach(
+(card,index)=>{
+
+const div =
+document.createElement("div");
+
+div.className =
+"playing-card";
+
+if(
+card.suit === "♥️" ||
+card.suit === "♦️"
+){
+
+div.classList.add(
+"red-card"
+);
+
+}
+
+if(
+hideDealer &&
+index === 1
+){
+
+div.textContent = "?";
+
+}
+else{
+
+div.textContent =
+card.rank +
+card.suit;
+
+}
+
+element.appendChild(div);
+
+});
+
+}
+
+
+function renderBlackjack(
+hideDealer=true
+){
+
+drawHand(
+document.getElementById(
+"playerCards"
+),
+player
+);
+
+drawHand(
+document.getElementById(
+"dealerCards"
+),
+dealer,
+hideDealer
+);
+
+document.getElementById(
+"playerScore"
+).textContent =
+handScore(player);
+
+document.getElementById(
+"dealerScore"
+).textContent =
+hideDealer
+? "?"
+: handScore(dealer);
+
+}
+
+
+function newBlackjack(){
+
+initAudio();
+
+player = [
+createCard(),
+createCard()
+];
+
+dealer = [
+createCard(),
+createCard()
+];
+
+blackjackActive = true;
+
+document.getElementById(
+"blackjackResult"
+).textContent =
+"Dein Zug!";
+
+renderBlackjack(true);
+
+}
+
+
+function hit(){
+
+if(!blackjackActive)
+return;
+
+player.push(
+createCard()
+);
+
+renderBlackjack(true);
+
+if(handScore(player)>21){
+
+blackjackActive = false;
+
+rounds++;
+
+loseSound();
+
+document.getElementById(
+"blackjackResult"
+).textContent =
+"💥 Über 21!";
+
+updateUI();
+
+}
+
+}
+
+
+function stand(){
+
+if(!blackjackActive)
+return;
+
+blackjackActive = false;
+
+while(
+handScore(dealer)<17
+){
+
+dealer.push(
+createCard()
+);
+
+}
+
+const playerScore =
+handScore(player);
+
+const dealerScore =
+handScore(dealer);
+
+rounds++;
+
+renderBlackjack(false);
+
+const result =
+document.getElementById(
+"blackjackResult"
+);
+
+if(
+dealerScore > 21 ||
+playerScore > dealerScore
+){
+
+wins++;
+
+addPoints(35);
+
+winSound();
+
+result.textContent =
+"🎉 Du gewinnst! +35 Punkte";
+
+}
+
+else if(
+playerScore === dealerScore
+){
+
+result.textContent =
+"🤝 Unentschieden.";
+
+}
+
+else{
+
+loseSound();
+
+result.textContent =
+"Dealer gewinnt.";
+
+}
+
+updateUI();
+
+}
+
+
+/* NUMBER RUSH */
+
+function buildNumbers(){
+
+const grid =
+document.getElementById(
+"numberGrid"
+);
+
+if(grid.children.length)
+return;
+
+for(let i=1;i<=30;i++){
+
+const button =
+document.createElement("button");
+
+button.textContent = i;
+
+button.onclick = ()=>{
+
+clickSound();
+
+if(
+button.classList.contains(
+"selected"
+)
+){
+
+button.classList.remove(
+"selected"
+);
+
+selectedNumbers =
+selectedNumbers.filter(
+n => n !== i
+);
+
+}
+
+else if(
+selectedNumbers.length < 5
+){
+
+button.classList.add(
+"selected"
+);
+
+selectedNumbers.push(i);
+
+}
+
+};
+
+grid.appendChild(button);
+
+}
+
+}
+
+
+function drawNumbers(){
+
+if(
+selectedNumbers.length !== 5
+){
+
+toast(
+"Bitte genau 5 Zahlen wählen."
+);
+
+return;
+
+}
+
+const drawn = [];
+
+while(
+drawn.length < 5
+){
+
+const number =
+Math.floor(
+Math.random()*30
+)+1;
+
+if(
+!drawn.includes(number)
+)
+drawn.push(number);
+
+}
+
+const hits =
+selectedNumbers.filter(
+number =>
+drawn.includes(number)
+).length;
+
+const rewards = [
+0,
+0,
+5,
+15,
+30,
+60
+];
+
+const reward =
+rewards[hits];
+
+rounds++;
+
+if(reward){
+
+wins++;
+
+addPoints(reward);
+
+winSound();
+
+}
+else{
+
+loseSound();
+
+}
+
+document.getElementById(
+"numberResult"
+).textContent =
+
+"Gezogen: " +
+drawn.join(", ") +
+" · " +
+hits +
+" Treffer" +
+
+(
+reward
+? " · +" +
+reward +
+" Punkte"
+: ""
+);
+
+updateUI();
+
+}
+
+
+/* DICE */
+
+function rollDice(){
+
+initAudio();
+
+const display =
+document.getElementById(
+"diceDisplay"
+);
+
+display.style.transform =
+"scale(1.15) rotate(8deg)";
+
+sound(
+180,
+.3,
+"square",
+.025
+);
+
+setTimeout(()=>{
+
+display.style.transform = "";
+
+const a =
+Math.floor(
+Math.random()*6
+)+1;
+
+const b =
+Math.floor(
+Math.random()*6
+)+1;
+
+const c =
+Math.floor(
+Math.random()*6
+)+1;
+
+const d =
+Math.floor(
+Math.random()*6
+)+1;
+
+const playerTotal =
+a+b;
+
+const machineTotal =
+c+d;
+
+display.textContent =
+"🎲 " +
+a +
+"  " +
+b +
+"   VS   🎲 " +
+c +
+"  " +
+d;
+
+rounds++;
+
+const result =
+document.getElementById(
+"diceResult"
+);
+
+if(
+playerTotal > machineTotal
+){
+
+wins++;
+
+addPoints(20);
+
+winSound();
+
+result.textContent =
+"🎉 Du gewinnst! +20 Punkte";
+
+}
+
+else if(
+playerTotal === machineTotal
+){
+
+result.textContent =
+"🤝 Unentschieden!";
+
+}
+
+else{
+
+loseSound();
+
+result.textContent =
+"Die Maschine gewinnt.";
+
+}
+
+updateUI();
+
+},350);
+
+}
+
+
+/* RESET */
+
+function resetGame(){
+
+if(
+confirm(
+"Spielstand wirklich zurücksetzen?"
+)
+){
+
+points = 1000;
+rounds = 0;
+wins = 0;
+highscore = 1000;
+
+updateUI();
+
+toast(
+"Spielstand zurückgesetzt."
+);
+
+}
+
+}
+
+
+updateUI();
+
+</script>
+
+</body>
+</html>
